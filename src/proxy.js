@@ -38,7 +38,7 @@ function proxy(req, res) {
         // Set headers and return an invalid request response
         Object.keys(headers).forEach(key => res.setHeader(key, headers[key]));
         req.params.randomIP = randomIP;
-    return res.end(`Image Compression Service - IP: ${req.params.randomIP}`);
+    return res.end(`Invalid Request`);
     }
 
     // Process and clean URL
