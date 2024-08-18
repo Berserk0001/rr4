@@ -11,7 +11,7 @@
     "fastify": "^3.0.0",
     "@fastify/express": "3.0.0",
     "request": "^2.88.2",
-    "express": "4.19.2",
+    
     "lodash": "^4.17.21",
     "sharp": "0.28.2"
   },
