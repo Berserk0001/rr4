@@ -8,7 +8,7 @@
   },
     
   "dependencies": {
-    "fastify": "^3.0.0",
+    "fastify": "4.x",
     "@fastify/express": "3.0.0",
     "request": "^2.88.2",
     
