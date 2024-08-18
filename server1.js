@@ -6,14 +6,13 @@ const PORT = process.env.PORT || 8080;
 
 // Create the HTTP server
 const server = http.createServer((req, res) => {
-  if (req.url === '/') {
-    proxy(req, res);
-  } else if (req.url === '/favicon.ico') {
+  if (req.url === '/favicon.ico') {
+    // Always send a 204 No Content response for /favicon.ico
     res.writeHead(204);
     res.end();
   } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not Found');
+    // Handle the root path '/' and any other paths with the proxy function
+    proxy(req, res);
   }
 });
 
