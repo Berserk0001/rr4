@@ -1,22 +1,27 @@
-const http = require('http');
-// const authenticate = require('./src/authenticate');
+const fastify = require('fastify')();
+const express = require('@fastify/express');
 const proxy = require('./src/proxy');
 
 const PORT = process.env.PORT || 8080;
 
-// Create the HTTP server
-const server = http.createServer((req, res) => {
-  if (req.url === '/favicon.ico') {
-    // Always send a 204 No Content response for /favicon.ico
-    res.writeHead(204);
-    res.end();
-  } else {
-    // Handle the root path '/' and any other paths with the proxy function
-    proxy(req, res);
-  }
+// Register the express plugin
+fastify.register(express);
+
+// Set up the routes
+fastify.use('/', (req, res) => {
+  // Proxy request handling
+  proxy(req, res);
 });
 
-// Start listening on the specified port
-server.listen(PORT, () => {
-  console.log(`Listening on ${PORT}`);
+fastify.use('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
+
+// Start the server
+fastify.listen(PORT, (err, address) => {
+  if (err) {
+    console.error(err);
+    process.exit(1);
+  }
+  console.log(`Listening on ${address}`);
 });
