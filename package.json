@@ -4,7 +4,7 @@
   "description": "A generic data processing service.",
   "author": "Anonymous",
   "scripts": {
-    "start": "node app.js" 
+    "start": "node server1.js" 
   },
     
   "dependencies": {
