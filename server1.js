@@ -1,4 +1,7 @@
-const fastify = require('fastify')();
+//const fastify = require('fastify')();
+const fastify = require('fastify')({
+  logger: true
+})
 const express = require('@fastify/express');
 const proxy = require('./src/proxy');
 
