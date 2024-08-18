@@ -4,24 +4,31 @@ const proxy = require('./src/proxy');
 
 const PORT = process.env.PORT || 8080;
 
-// Register the express plugin
-fastify.register(express);
+async function start() {
+  // Register the express plugin
+  await fastify.register(express);
 
-// Set up the routes
-fastify.use('/', (req, res) => {
-  // Proxy request handling
-  proxy(req, res);
-});
+  // Use Express middleware for handling the proxy
+  fastify.use('/', (req, res, next) => {
+    if (req.path === '/') {
+      return proxy(req, res);
+    }
+    next();
+  });
 
-fastify.use('/favicon.ico', (req, res) => {
-  res.status(204).end();
-});
+  // Handle favicon.ico separately
+  fastify.use('/favicon.ico', (req, res) => {
+    res.status(204).end();
+  });
 
-// Start the server
-fastify.listen(PORT, (err, address) => {
-  if (err) {
-    console.error(err);
-    process.exit(1);
-  }
-  console.log(`Listening on ${address}`);
-});
+  // Start the server
+  fastify.listen(PORT, (err, address) => {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+    console.log(`Listening on ${address}`);
+  });
+}
+
+start();
