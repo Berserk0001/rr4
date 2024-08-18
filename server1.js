@@ -22,13 +22,12 @@ async function start() {
   });
 
   // Start the server
-  fastify.listen(PORT, (err, address) => {
-    if (err) {
-      console.error(err);
-      process.exit(1);
-    }
-    console.log(`Listening on ${address}`);
-  });
+  fastify.listen({host: host, port: port }, function (err, address) {
+  if (err) {
+    fastify.log.error(err)
+    process.exit(1)
+  }
+})
 }
 
 start();
