@@ -22,12 +22,12 @@ async function start() {
   });
 
   // Start the server
-  fastify.listen({host: '0.0.0.0' , port: port }, function (err, address) {
+  fastify.listen({host: '0.0.0.0' , port: PORT }, function (err, address) {
   if (err) {
     fastify.log.error(err)
     process.exit(1)
   }
-})
+});
 }
 
 start();
