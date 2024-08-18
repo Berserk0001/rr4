@@ -10,7 +10,7 @@
   "dependencies": {
     "fastify": "4.x",
     "@fastify/express": "3.0.0",
-    "request": "^2.88.2",
+    "request": "2.88.0",
     
     "lodash": "^4.17.21",
     "sharp": "0.28.2"
