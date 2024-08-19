@@ -8,9 +8,8 @@
   },
     
   "dependencies": {
-    "fastify": "4.x",
-    "@fastify/express": "3.0.0",
-    "request": "2.88.0",
+    "express" :"4.x",
+    "request": "2.88.2",
     
     "lodash": "^4.17.21",
     "sharp": "0.28.2"
