@@ -12,9 +12,9 @@
     "request": "2.88.2",
     
     "lodash": "^4.17.21",
-    "sharp": "0.28.2"
+    "sharp": "0.32.6"
   },
   "engines": {
-    "node": "16.x"
+    "node": "18.x"
   }
 }
