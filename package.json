@@ -1,8 +1,8 @@
 {
-  "name": "anonymous-service",
-  "version": "1.0.0",
-  "description": "A generic data processing service.",
-  "author": "Anonymous",
+  "name": "",
+  "version": "",
+  "description": "",
+  "author": "",
   "scripts": {
     "start": "node app.js" 
   },
@@ -10,7 +10,6 @@
   "dependencies": {
     "express" :"4.x",
     "request": "2.88.2",
-    
     "lodash": "^4.17.21",
     "sharp": "0.32.6"
   },
