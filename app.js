@@ -8,6 +8,7 @@ const proxy = require('./src/proxy');
 
 const PORT = process.env.PORT || 8080;
 
+
 // Define paths to different favicons
 const favicons = [
     path.join(__dirname, 'public', 'favicon1.ico'),
@@ -23,7 +24,7 @@ app.get('/favicon.ico', (req, res) => {
 
 // Trust proxy settings
 app.enable('trust proxy');
-
+app.disable('x-powered-by');
 // Route with proxy functionality
 app.get('/', proxy);
 
