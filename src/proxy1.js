@@ -1,6 +1,6 @@
 // ./src/proxy.js
 
-const { fetch } = require('undici'); // Import fetch from undici
+const { fetch } = require('undici'); // Use fetch from undici
 const pick = require('lodash').pick; // Directly import the pick function
 const { generateRandomIP, randomUserAgent } = require('./utils');
 const copyHdrs = require('./copyHeaders');
@@ -36,7 +36,7 @@ async function processRequest(request, reply) {
 
         Object.entries(hdrs).forEach(([key, value]) => reply.header(key, value));
         
-        return reply.send(`1we23`);
+        return reply.send('1we23');
     }
 
     const urlList = Array.isArray(url) ? url.join('&url=') : url;
@@ -58,26 +58,25 @@ async function processRequest(request, reply) {
                 'x-forwarded-for': randomIP,
                 'via': randomVia(),
             },
-            timeout: 10000,
-            follow: 5, // max redirects
-            compress: true,
+            // the options are slightly different in undici, but these are still valid
+            maxRedirections: 5, // max redirects
         });
 
-        if (response.statusCode >= 400) {
+        if (!response.ok) {
             return handleRedirect(request, reply);
         }
 
-        const buffer = Buffer.from(await response.body.arrayBuffer());
+        const buffer = await response.arrayBuffer(); // In undici, use arrayBuffer instead of buffer
 
         copyHdrs(response, reply);
         reply.header('content-encoding', 'identity');
         request.params.originType = response.headers['content-type'] || '';
-        request.params.originSize = buffer.length;
+        request.params.originSize = buffer.byteLength;
 
         if (checkCompression(request)) {
-            return applyCompression(request, reply, buffer);
+            return applyCompression(request, reply, Buffer.from(buffer));
         } else {
-            return performBypass(request, reply, buffer);
+            return performBypass(request, reply, Buffer.from(buffer));
         }
     } catch (err) {
         return handleRedirect(request, reply);
