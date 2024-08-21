@@ -10,7 +10,7 @@ const proxy = require('./src/proxy');
 const PORT = process.env.PORT || 8080;
 
 // Remove x-powered-by header
-fastify.removeHeader('x-powered-by');
+//fastify.removeHeader('x-powered-by');
 
 // Set up the route
 fastify.get('/', async (request, reply) => {
