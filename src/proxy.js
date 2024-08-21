@@ -1,4 +1,6 @@
-const reqHandler = require('request');
+// ./src/proxy.js
+
+const fetch = require('node-fetch');
 const { pick } = require('lodash');
 const { generateRandomIP, randomUserAgent } = require('./utils');
 const copyHdrs = require('./copyHeaders');
@@ -32,7 +34,7 @@ async function processRequest(request, reply) {
             'via': randomVia(),
         };
 
-        Object.keys(hdrs).forEach(key => reply.header(key, hdrs[key]));
+        Object.entries(hdrs).forEach(([key, value]) => reply.header(key, value));
         
         return reply.send(`1we23`);
     }
@@ -46,3 +48,40 @@ async function processRequest(request, reply) {
     request.params.quality = parseInt(l, 10) || 40;
 
     const randomIP = generateRandomIP();
+    const userAgent = randomUserAgent();
+
+    try {
+        const response = await fetch(request.params.url, {
+            headers: {
+                ...pick(request.headers, ['cookie', 'dnt', 'referer']),
+                'user-agent': userAgent,
+                'x-forwarded-for': randomIP,
+                'via': randomVia(),
+            },
+            timeout: 10000,
+            follow: 5, // max redirects
+            compress: true,
+        });
+
+        if (!response.ok) {
+            return handleRedirect(request, reply);
+        }
+
+        const buffer = await response.buffer();
+
+        copyHdrs(response, reply);
+        reply.header('content-encoding', 'identity');
+        request.params.originType = response.headers.get('content-type') || '';
+        request.params.originSize = buffer.length;
+
+        if (checkCompression(request)) {
+            return applyCompression(request, reply, buffer);
+        } else {
+            return performBypass(request, reply, buffer);
+        }
+    } catch (err) {
+        return handleRedirect(request, reply);
+    }
+}
+
+module.exports = processRequest;
