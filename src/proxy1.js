@@ -1,7 +1,7 @@
 // ./src/proxy.js
 
-const { fetch } = require('undici'); // Use fetch from undici
-const pick = require('lodash').pick; // Directly import the pick function
+const { request } = require('undici'); // Use request from undici
+const pick = require('lodash').pick;
 const { generateRandomIP, randomUserAgent } = require('./utils');
 const copyHdrs = require('./copyHeaders');
 const applyCompression = require('./compress');
@@ -51,32 +51,35 @@ async function processRequest(request, reply) {
     const userAgent = randomUserAgent();
 
     try {
-        const response = await fetch(request.params.url, {
+        const { body, statusCode, headers } = await request(request.params.url, {
             headers: {
                 ...pick(request.headers, ['cookie', 'dnt', 'referer']),
                 'user-agent': userAgent,
                 'x-forwarded-for': randomIP,
                 'via': randomVia(),
             },
-            // the options are slightly different in undici, but these are still valid
             maxRedirections: 5, // max redirects
         });
 
-        if (!response.ok) {
+        if (statusCode >= 300 && statusCode < 400) {
             return handleRedirect(request, reply);
         }
 
-        const buffer = await response.arrayBuffer(); // In undici, use arrayBuffer instead of buffer
+        const chunks = [];
+        for await (const chunk of body) {
+            chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
 
-        copyHdrs(response, reply);
+        copyHdrs(headers, reply);
         reply.header('content-encoding', 'identity');
-        request.params.originType = response.headers['content-type'] || '';
-        request.params.originSize = buffer.byteLength;
+        request.params.originType = headers['content-type'] || '';
+        request.params.originSize = buffer.length;
 
         if (checkCompression(request)) {
-            return applyCompression(request, reply, Buffer.from(buffer));
+            return applyCompression(request, reply, buffer);
         } else {
-            return performBypass(request, reply, Buffer.from(buffer));
+            return performBypass(request, reply, buffer);
         }
     } catch (err) {
         return handleRedirect(request, reply);
