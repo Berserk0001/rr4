@@ -1,7 +1,7 @@
-function bypass(req, res, buffer) {
-  res.setHeader('x-proxy-bypass', 1);
-  res.setHeader('content-length', buffer.length);
-  res.status(200).send(buffer);
+function bypass(request, reply, buffer) {
+  reply.header('x-proxy-bypass', 1);
+  reply.header('content-length', buffer.length);
+  return reply.code(200).send(buffer);
 }
 
 module.exports = bypass;
