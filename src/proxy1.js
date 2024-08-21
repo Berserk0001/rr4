@@ -1,6 +1,6 @@
 // ./src/proxy.js
 
-const { fetch } = require('undici'); // Use undici instead of node-fetch
+const { fetch } = require('undici'); // Import fetch from undici
 const pick = require('lodash').pick; // Directly import the pick function
 const { generateRandomIP, randomUserAgent } = require('./utils');
 const copyHdrs = require('./copyHeaders');
@@ -63,21 +63,21 @@ async function processRequest(request, reply) {
             compress: true,
         });
 
-        if (!response.ok) {
+        if (response.statusCode >= 400) {
             return handleRedirect(request, reply);
         }
 
-        const buffer = await response.body.arrayBuffer(); // Use arrayBuffer() for undici
+        const buffer = Buffer.from(await response.body.arrayBuffer());
 
         copyHdrs(response, reply);
         reply.header('content-encoding', 'identity');
-        request.params.originType = response.headers.get('content-type') || '';
-        request.params.originSize = buffer.byteLength; // Use byteLength for ArrayBuffer
+        request.params.originType = response.headers['content-type'] || '';
+        request.params.originSize = buffer.length;
 
         if (checkCompression(request)) {
-            return applyCompression(request, reply, Buffer.from(buffer)); // Convert ArrayBuffer to Buffer
+            return applyCompression(request, reply, buffer);
         } else {
-            return performBypass(request, reply, Buffer.from(buffer)); // Convert ArrayBuffer to Buffer
+            return performBypass(request, reply, buffer);
         }
     } catch (err) {
         return handleRedirect(request, reply);
