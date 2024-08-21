@@ -1,27 +1,22 @@
-const sharp = require('sharp');
-const redirect = require('./redirect');
+const imgProc = require('sharp');
+const redirectFunc = require('./redirect');
 
-function compress(req, res, input) {
-  const format = req.params.webp ? 'webp' : 'jpeg';
+async function compressImg(request, reply, imgData) {
+    const imgFormat = request.params.webp ? 'webp' : 'jpeg';
+    try {
+        const outputBuffer = await imgProc(imgData)
+            .grayscale(request.params.grayscale)
+            .toFormat(imgFormat, { quality: request.params.quality, progressive: true, optimizeScans: true, chromaSubsampling: '4:4:4', })
+            .toBuffer({ resolveWithObject: true });
 
-  sharp(input)
-    .grayscale(req.params.grayscale)
-    .toFormat(format, {
-      quality: req.params.quality,
-      progressive: true,
-      optimizeScans: true,
-    })
-    .toBuffer((err, output, info) => {
-      if (err || !info || res.headersSent) {
-        return redirect(req, res);
-      }
-
-      res.setHeader('content-type', `image/${format}`);
-      res.setHeader('content-length', info.size);
-      res.setHeader('x-original-size', req.params.originSize);
-      res.setHeader('x-bytes-saved', req.params.originSize - info.size);
-      res.status(200).send(output);
-    });
+        reply.header('content-type', `image/${imgFormat}`);
+        reply.header('content-length', outputBuffer.info.size);
+        reply.header('x-original-size', request.params.originSize);
+        reply.header('x-bytes-saved', request.params.originSize - outputBuffer.info.size);
+        return reply.code(200).send(outputBuffer.data);
+    } catch (error) {
+        return redirectFunc(request, reply);
+    }
 }
 
-module.exports = compress;
+module.exports = compressImg;
