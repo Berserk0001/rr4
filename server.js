@@ -19,9 +19,9 @@ fastify.get('/', async (request, reply) => {
 
 // Start the server
 const start = async () => {
-  try {
-    await fastify.listen(PORT, '0.0.0.0');
-    console.log(`Server listening on ${PORT}`);
+ try {
+    await fastify.listen({ host: '0.0.0.0', port: PORT });
+    console.log(`Listening on ${PORT}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
