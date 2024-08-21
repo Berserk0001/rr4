@@ -1,6 +1,6 @@
 // ./src/proxy.js
 
-const { request: undiciRequest } = require('undici'); // Use request from undici
+const undici = require('undici');
 const pick = require('lodash').pick;
 const { generateRandomIP, randomUserAgent } = require('./utils');
 const copyHdrs = require('./copyHeaders');
@@ -51,7 +51,7 @@ async function processRequest(request, reply) {
     const userAgent = randomUserAgent();
 
     try {
-        const { body, statusCode, headers } = await undiciRequest(request.params.url, {
+        const origin = await undici.request(request.params.url, {
             headers: {
                 ...pick(request.headers, ['cookie', 'dnt', 'referer']),
                 'user-agent': userAgent,
@@ -61,25 +61,29 @@ async function processRequest(request, reply) {
             maxRedirections: 5, // max redirects
         });
 
-        if (statusCode >= 300 && statusCode < 400) {
+        // Handling the response from undici.request
+        if (origin.statusCode >= 300 && origin.statusCode < 400) {
             return handleRedirect(request, reply);
         }
 
-        const chunks = [];
-        for await (const chunk of body) {
-            chunks.push(chunk);
-        }
-        const buffer = Buffer.concat(chunks);
-
-        copyHdrs(headers, reply);
+        // Copy headers from origin to the reply
+        copyHdrs(origin, reply);
         reply.header('content-encoding', 'identity');
-        request.params.originType = headers['content-type'] || '';
-        request.params.originSize = buffer.length;
+        request.params.originType = origin.headers['content-type'] || '';
+        request.params.originSize = origin.headers['content-length'] || '0';
 
+        // If compression is required, compress the response
         if (checkCompression(request)) {
-            return applyCompression(request, reply, buffer);
+            return applyCompression(request, reply, origin.body);
         } else {
-            return performBypass(request, reply, buffer);
+            // Otherwise, bypass the response directly to the client
+            reply.header('x-proxy-bypass', 1);
+            for (const headerName of ["accept-ranges", "content-type", "content-length", "content-range"]) {
+                if (origin.headers[headerName]) {
+                    reply.header(headerName, origin.headers[headerName]);
+                }
+            }
+            return origin.body.pipe(reply.raw);  // Pipe directly to the client
         }
     } catch (err) {
         return handleRedirect(request, reply);
