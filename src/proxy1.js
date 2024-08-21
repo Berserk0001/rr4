@@ -1,6 +1,6 @@
 // ./src/proxy.js
 
-const { request } = require('undici'); // Use request from undici
+const { request: undiciRequest } = require('undici'); // Use request from undici
 const pick = require('lodash').pick;
 const { generateRandomIP, randomUserAgent } = require('./utils');
 const copyHdrs = require('./copyHeaders');
@@ -51,7 +51,7 @@ async function processRequest(request, reply) {
     const userAgent = randomUserAgent();
 
     try {
-        const { body, statusCode, headers } = await request(request.params.url, {
+        const { body, statusCode, headers } = await undiciRequest(request.params.url, {
             headers: {
                 ...pick(request.headers, ['cookie', 'dnt', 'referer']),
                 'user-agent': userAgent,
