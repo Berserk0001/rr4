@@ -1,7 +1,7 @@
 // ./src/proxy.js
 
 const fetch = require('node-fetch');
-const { pick } = require('lodash');
+const pick = require('lodash').pick; // Directly import the pick function
 const { generateRandomIP, randomUserAgent } = require('./utils');
 const copyHdrs = require('./copyHeaders');
 const applyCompression = require('./compress');
