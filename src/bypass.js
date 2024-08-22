@@ -4,4 +4,4 @@ function bypass(request, reply, buffer) {
   return reply.code(200).send(buffer);
 }
 
-module.exports = bypass;
+export default bypass;
