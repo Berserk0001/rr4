@@ -1,5 +1,5 @@
-const imgProc = require('sharp');
-const redirectFunc = require('./redirect');
+import imgProc from 'sharp';
+import redirectFunc from './redirect';
 
 async function compressImg(request, reply, imgData) {
     const imgFormat = request.params.webp ? 'webp' : 'jpeg';
