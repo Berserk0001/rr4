@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "fastify": "4.x",
-    "node-fetch": "^3.0.0",
+    "node-fetch": "3.x",
     "lodash": "^4.17.21",
     "sharp": "0.33.5"
   },
