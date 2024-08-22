@@ -2,7 +2,7 @@
 'use strict';
 
 import fastify from 'fastify';
-import proxy from './src/proxy.js'; // Ensure to use .js or .mjs if needed
+import { processRequest } from './src/proxy.js'; // Import the named export
 
 const app = fastify({ 
   logger: true,
@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 8080;
 
 // Set up the route
 app.get('/', async (request, reply) => {
-  return proxy(request, reply);
+  return processRequest(request, reply);
 });
 
 // Start the server
