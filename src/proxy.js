@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
-import pick from 'lodash/pick'; 
+import _ from 'lodash'; // Import lodash
+const { pick } = _; // Access 'pick' from lodash
 import { generateRandomIP, randomUserAgent } from './utils';
 import copyHdrs from './copyHeaders';
 import applyCompression from './compress';
