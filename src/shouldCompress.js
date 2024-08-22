@@ -22,4 +22,4 @@ function shouldCompress(request) {
   return true;
 }
 
-module.exports = shouldCompress;
+export default shouldCompress;
