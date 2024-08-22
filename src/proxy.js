@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
 import _ from 'lodash'; // Import lodash
 const { pick } = _; // Access 'pick' from lodash
-import utils from './utils.js'; // Import default export from utils
-const { generateRandomIP, randomUserAgent } = utils; // Destructure the functions
+import nutils from './utils'; // Import default export from utils
+const { generateRandomIP, randomUserAgent } = nutils; // Destructure the functions
 import copyHdrs from './copyHeaders';
 import applyCompression from './compress';
 import performBypass from './bypass';
