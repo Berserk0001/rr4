@@ -16,4 +16,4 @@ function redirect(request, reply) {
     .send();
 }
 
-module.exports = redirect;
+export default redirect;
