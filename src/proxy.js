@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { pick } from 'lodash'; // Directly import the pick function
+import lodash from 'lodash'; // Import lodash as the default import
 import { generateRandomIP, randomUserAgent } from './utils.js';
 import { copyHeaders as copyHdrs } from './copyHeaders.js';
 import { compressImg as applyCompression } from './compress.js';
@@ -26,7 +26,7 @@ export async function processRequest(request, reply) {
         const ipAddress = generateRandomIP();
         const ua = randomUserAgent();
         const hdrs = {
-            ...pick(request.headers, ['cookie', 'dnt', 'referer']),
+            ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
             'x-forwarded-for': ipAddress,
             'user-agent': ua,
             'via': randomVia(),
@@ -51,7 +51,7 @@ export async function processRequest(request, reply) {
     try {
         const response = await fetch(request.params.url, {
             headers: {
-                ...pick(request.headers, ['cookie', 'dnt', 'referer']),
+                ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
                 'user-agent': userAgent,
                 'x-forwarded-for': randomIP,
                 'via': randomVia(),
