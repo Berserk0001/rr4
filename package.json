@@ -4,7 +4,7 @@
   "description": "",
   "author": "",
   "scripts": {
-    "start": "node server.mjs" 
+    "start": "node server.js" 
   },
   "dependencies": {
     "fastify": "4.x",
