@@ -1,9 +1,7 @@
-// ./src/shouldCompress.js
-
 const MIN_COMPRESS_LENGTH = 512; // Minimum size in bytes to apply compression
 const MIN_TRANSPARENT_COMPRESS_LENGTH = MIN_COMPRESS_LENGTH * 100;
 
-function shouldCompress(request) {
+export function shouldCompress(request) {
   const { originType, originSize, webp } = request.params;
 
   if (!originType.startsWith('image')) {
@@ -21,5 +19,3 @@ function shouldCompress(request) {
 
   return true;
 }
-
-export default shouldCompress;
