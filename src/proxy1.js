@@ -50,7 +50,7 @@ async function processRequest(request, reply) {
     const randomIP = generateRandomIP();
     const userAgent = randomUserAgent();
 
-    
+    try {
         const origin = await undici.request(request.params.url, {
             headers: {
                 ...pick(request.headers, ['cookie', 'dnt', 'referer']),
@@ -58,34 +58,35 @@ async function processRequest(request, reply) {
                 'x-forwarded-for': randomIP,
                 'via': randomVia(),
             },
-            maxRedirections: 5, // max redirects
+            maxRedirections: 5,
         });
 
-        // Handling the response from undici.request
-        if (origin.statusCode >= 300 && origin.statusCode < 400) {
+        // Check if the response is successful and should be processed
+        if (origin.statusCode >= 200 && origin.statusCode < 300) {
+            copyHdrs(origin, reply);
+            reply.header('content-encoding', 'identity');
+            request.params.originType = origin.headers['content-type'] || '';
+            request.params.originSize = origin.headers['content-length'] || '0';
+
+            if (checkCompression(request)) {
+                return applyCompression(request, reply, origin.body);
+            } else {
+                reply.header('x-proxy-bypass', 1);
+                for (const headerName of ["accept-ranges", "content-type", "content-length", "content-range"]) {
+                    if (origin.headers[headerName]) {
+                        reply.header(headerName, origin.headers[headerName]);
+                    }
+                }
+                return origin.body.pipe(reply.raw);  // Pipe directly to the client
+            }
+        } else {
+            // If the response is a redirect or an error, handle it accordingly
             return handleRedirect(request, reply);
         }
-
-        // Copy headers from origin to the reply
-        copyHdrs(origin, reply);
-        reply.header('content-encoding', 'identity');
-        request.params.originType = origin.headers['content-type'] || '';
-        request.params.originSize = origin.headers['content-length'] || '0';
-
-        // If compression is required, compress the response
-        if (checkCompression(request)) {
-            return applyCompression(request, reply, origin.body);
-        } else {
-            // Otherwise, bypass the response directly to the client
-            reply.header('x-proxy-bypass', 1);
-            for (const headerName of ["accept-ranges", "content-type", "content-length", "content-range"]) {
-                if (origin.headers[headerName]) {
-                    reply.header(headerName, origin.headers[headerName]);
-                }
-            }
-            return origin.body.pipe(reply.raw);  // Pipe directly to the client
-        }
-    
+    } catch (err) {
+        // Handle any errors that occur during the request
+        return handleRedirect(request, reply);
+    }
 }
 
 module.exports = processRequest;
