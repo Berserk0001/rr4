@@ -1,20 +1,42 @@
-import { redirect as redirectFunc } from './redirect.js';
 import sharp from 'sharp';
+import { redirect } from './redirect.js';
 
 export async function compressImg(request, reply, imgData) {
-  const imgFormat = request.params.webp ? 'webp' : 'jpeg';
-  try {
-    const outputBuffer = await sharp(imgData)
-      .grayscale(request.params.grayscale)
-      .toFormat(imgFormat, { quality: request.params.quality, progressive: true, optimizeScans: true, chromaSubsampling: '4:4:4' })
-      .toBuffer({ resolveWithObject: true });
+    const { webp, grayscale, quality, originSize } = request.params;
+    const imgFormat = webp ? 'webp' : 'jpeg';
 
-    reply.header('content-type', `image/${imgFormat}`);
-    reply.header('content-length', outputBuffer.info.size);
-    reply.header('x-original-size', request.params.originSize);
-    reply.header('x-bytes-saved', request.params.originSize - outputBuffer.info.size);
-    return reply.code(200).send(outputBuffer.data);
-  } catch (error) {
-    return redirectFunc(request, reply);
-  }
+    try {
+        // Initialize sharp pipeline with the input buffer
+        let sharpInstance = sharp(imgData);
+
+        // Apply grayscale only if necessary
+        if (grayscale) {
+            sharpInstance = sharpInstance.grayscale();
+        }
+
+        // Set format and compression options using the quality passed from request.params
+        const formatOptions = {
+            quality: quality, // Use the quality from request.params
+            progressive: true,
+            optimizeScans: webp, // Enable optimizeScans for WebP
+            chromaSubsampling: '4:2:0', // Chroma subsampling for better compression speed
+        };
+
+        // Apply format conversion
+        sharpInstance = sharpInstance.toFormat(imgFormat, formatOptions);
+
+        // Convert to buffer and resolve with output size info
+        const { data, info } = await sharpInstance.toBuffer({ resolveWithObject: true });
+
+        // Prepare and send the response
+        reply
+            .header('content-type', `image/${imgFormat}`)
+            .header('content-length', info.size)
+            .header('x-original-size', originSize)
+            .header('x-bytes-saved', originSize - info.size)
+            .code(200)
+            .send(data);
+    } catch (error) {
+        return redirect(request, reply);
+    }
 }
