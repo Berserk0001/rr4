@@ -1,13 +1,11 @@
-// ./src/proxy.js
-
-const fetch = require('node-fetch');
-const pick = require('lodash').pick; // Directly import the pick function
-const { generateRandomIP, randomUserAgent } = require('./utils');
-const copyHdrs = require('./copyHeaders');
-const applyCompression = require('./compress');
-const performBypass = require('./bypass');
-const handleRedirect = require('./redirect');
-const checkCompression = require('./shouldCompress');
+import fetch from 'node-fetch';
+import pick from 'lodash/pick'; 
+import { generateRandomIP, randomUserAgent } from './utils';
+import copyHdrs from './copyHeaders';
+import applyCompression from './compress';
+import performBypass from './bypass';
+import handleRedirect from './redirect';
+import checkCompression from './shouldCompress';
 
 const viaHeaders = [
     '1.1 example-proxy-service.com (ExampleProxy/1.0)',
@@ -84,4 +82,4 @@ async function processRequest(request, reply) {
     }
 }
 
-module.exports = processRequest;
+export default processRequest;
