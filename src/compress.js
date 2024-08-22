@@ -19,4 +19,4 @@ async function compressImg(request, reply, imgData) {
     }
 }
 
-module.exports = compressImg;
+export default compressImg;
