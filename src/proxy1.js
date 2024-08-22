@@ -50,7 +50,7 @@ async function processRequest(request, reply) {
     const randomIP = generateRandomIP();
     const userAgent = randomUserAgent();
 
-    try {
+    
         const origin = await undici.request(request.params.url, {
             headers: {
                 ...pick(request.headers, ['cookie', 'dnt', 'referer']),
@@ -85,9 +85,7 @@ async function processRequest(request, reply) {
             }
             return origin.body.pipe(reply.raw);  // Pipe directly to the client
         }
-    } catch (err) {
-        return handleRedirect(request, reply);
-    }
+    
 }
 
 module.exports = processRequest;
