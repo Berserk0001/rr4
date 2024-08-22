@@ -8,4 +8,4 @@ function copyHeaders(source, target) {
   }
 }
 
-module.exports = copyHeaders;
+export default copyHeaders;
