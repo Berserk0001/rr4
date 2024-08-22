@@ -9,7 +9,7 @@
     
   "dependencies": {
     "fastify" :"4.x",
-    "undici": "6.x",
+    "axios": "1.7.4",
     "lodash": "^4.17.21",
     "sharp": "0.33.5"
   },
