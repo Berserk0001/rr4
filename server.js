@@ -6,7 +6,7 @@ const fastify = require('fastify')({
   disableRequestLogging: true,
   trustProxy: true // Enable trust proxy
 });
-const proxy = require('./src/proxy1');
+const proxy = require('./src/proxy2');
 
 const PORT = process.env.PORT || 8080;
 
