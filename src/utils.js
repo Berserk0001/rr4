@@ -15,4 +15,4 @@ function randomUserAgent() {
   return userAgents[Math.floor(Math.random() * userAgents.length)];
 }
 
-module.exports = { generateRandomIP, randomUserAgent };
+export default { generateRandomIP, randomUserAgent };
