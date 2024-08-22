@@ -1,6 +1,4 @@
-// ./src/redirect.js
-
-function redirect(request, reply) {
+export function redirect(request, reply) {
   if (reply.sent) {
     return;
   }
@@ -15,5 +13,3 @@ function redirect(request, reply) {
     .code(302)
     .send();
 }
-
-export default redirect;
