@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { redirect } from './rrd.js';
+import { redirect } from './redirect.js';
 
 export async function compressImg(request, reply, imgData) {
     const { webp, grayscale, quality, originSize } = request.params;
