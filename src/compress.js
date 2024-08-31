@@ -1,3 +1,4 @@
+"use strict";
 import sharp from 'sharp';
 import { redirect } from './redirect.js';
 
