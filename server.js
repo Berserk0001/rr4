@@ -10,7 +10,7 @@ const app = fastify({
   trustProxy: true // Enable trust proxy
 });
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
 // Set up the route
 app.get('/', async (request, reply) => {
