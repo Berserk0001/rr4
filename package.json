@@ -1,19 +1,21 @@
 {
-  "name": "",
-  "version": "",
-  "description": "",
-  "author": "",
+  "name": "myapp",
+  "version": "2.0",
+  "description": "an app",
+  "author": "Team1",
+  "license":"AGPL-3.0-only",
   "scripts": {
     "start": "node server.js" 
   },
   "dependencies": {
-    "fastify": "4.28.1",
-    "node-fetch": "3.3.2",
+    "fastify": "^4.28.1",
+    "node-fetch": "^3.3.2",
     "lodash": "^4.17.21",
-    "sharp": "0.33.5"
+    "sharp": "^0.33.5"
   },
   "engines": {
-    "node": "20.x"
+    "node": "20.x",
+    "yarn": "1.x"
   },
   "type": "module"
 }
