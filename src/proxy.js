@@ -1,3 +1,4 @@
+"use strict";
 import fetch from 'node-fetch';
 import lodash from 'lodash'; // Import lodash as the default import
 import { generateRandomIP, randomUserAgent } from './utils.js';
