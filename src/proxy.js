@@ -34,7 +34,7 @@ export async function processRequest(request, reply) {
 
         Object.entries(hdrs).forEach(([key, value]) => reply.header(key, value));
         
-        return reply.send(`1we23`);
+        return reply.send(`bandwidth-hero-proxy`);
     }
 
     const urlList = Array.isArray(url) ? url.join('&url=') : url;
