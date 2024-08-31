@@ -1,3 +1,4 @@
+"use strict";
 export function redirect(request, reply) {
   if (reply.sent) {
     return;
