@@ -5,8 +5,8 @@ import fastify from 'fastify';
 import { processRequest } from './src/proxy.js'; // Import the named export
 
 const app = fastify({ 
-  logger: false,
-  disableRequestLogging: false,
+  logger: true,
+  disableRequestLogging: true,
   trustProxy: true // Enable trust proxy
 });
 
