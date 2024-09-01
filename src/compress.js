@@ -7,31 +7,32 @@ export async function compressImgStream(request, reply, imgStream) {
     const imgFormat = webp ? 'webp' : 'jpeg';
 
     try {
-        // Create the sharp instance and start the pipeline
-        const transform = sharp()
+        // Collect the incoming stream into a buffer
+        const chunks = [];
+        for await (const chunk of imgStream) {
+            chunks.push(chunk);
+        }
+        const imgBuffer = Buffer.concat(chunks);
+
+        // Create the sharp instance and process the buffer
+        const { data, info } = await sharp(imgBuffer)
             .grayscale(grayscale) // Apply grayscale conditionally
             .toFormat(imgFormat, {
                 quality, // Use the provided quality
                 progressive: true,
                 optimizeScans: webp, // Optimize scans only for WebP
                 chromaSubsampling: webp ? '4:4:4' : '4:2:0', // Conditional chroma subsampling
-            });
+            })
+            .toBuffer({ resolveWithObject: true });
 
-        // Pipe the incoming stream through sharp and out to the reply
-        const processedStream = imgStream.pipe(transform);
-
-        // Get the output info from the sharp transform
-        processedStream.on('info', (info) => {
-            reply
-                .header('content-type', `image/${imgFormat}`)
-                .header('content-length', info.size)
-                .header('x-original-size', originSize)
-                .header('x-bytes-saved', originSize - info.size)
-                .code(200);
-        });
-
-        // Stream the processed image back to the client
-        return processedStream.pipe(reply.raw);
+        // Send response with appropriate headers
+        reply
+            .header('content-type', `image/${imgFormat}`)
+            .header('content-length', info.size)
+            .header('x-original-size', originSize)
+            .header('x-bytes-saved', originSize - info.size)
+            .code(200)
+            .send(data);
 
     } catch (error) {
         return redirect(request, reply);
