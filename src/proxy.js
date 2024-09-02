@@ -59,8 +59,8 @@ export async function processRequest(request, reply) {
                 'via': randomVia(),
             },
             timeout: 10000,
-            follow: 4, // max redirects
-            compress: false,
+            follow: 5, // max redirects
+            compress: true,
         });
 
         if (!response.ok) {
@@ -71,11 +71,12 @@ export async function processRequest(request, reply) {
         reply.header('content-encoding', 'identity');
         request.params.originType = response.headers.get('content-type') || '';
         request.params.originSize = parseInt(response.headers.get('content-length'), 10) || 0;
+
+        const input = { body: response.body }; // Wrap the stream in an object
+
         if (checkCompression(request)) {
-            // Pass the response body stream to the compressImg function
-            return applyCompression(request, reply, response.body);
+            return applyCompression(request, reply, input);
         } else {
-            // Pass the response body stream to the bypass function
             return performBypass(request, reply, response.body);
         }
     } catch (err) {
