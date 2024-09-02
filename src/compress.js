@@ -13,8 +13,8 @@ export async function compressImg(request, reply, imgStream) {
             .toFormat(imgFormat, {
                 quality,
                 progressive: true,
-                optimizeScans: webp,
-                chromaSubsampling: webp ? '4:4:4' : '4:2:0',
+                optimizeScans: true,
+                chromaSubsampling: '4:4:4',
             });
 
         // Pipe the image stream into sharp
