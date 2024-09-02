@@ -18,7 +18,7 @@ export async function compressImgStream(request, reply, imgStream) {
             });
 
         // Convert to buffer and get info
-        const { data, info } = await sharpInstance.toBuffer({ resolveWithObject: true });
+        const { data, info } = await transform.toBuffer({ resolveWithObject: true });
 
         // Send response with appropriate headers
         reply
