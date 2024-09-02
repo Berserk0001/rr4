@@ -2,12 +2,12 @@
 import sharp from 'sharp';
 import { redirect } from './redirect.js';
 
-export async function compressImgStream(request, reply, imgStream) {
+export async function compressImg(request, reply, imgStream) {
     const { webp, grayscale, quality, originSize } = request.params;
     const imgFormat = webp ? 'webp' : 'jpeg';
 
     try {
-        // Create the sharp instance and start the pipeline
+        // Create the sharp instance and start the pipeline with a stream
         let sharpInstance = sharp()
             .grayscale(grayscale) // Apply grayscale conditionally
             .toFormat(imgFormat, {
@@ -17,34 +17,22 @@ export async function compressImgStream(request, reply, imgStream) {
                 chromaSubsampling: webp ? '4:4:4' : '4:2:0', // Conditional chroma subsampling
             });
 
-        // Convert the incoming stream to a buffer and process the image
-        const processedBuffer = await sharpInstance
-            .fromBuffer(await imgStreamToBuffer(imgStream))
-            .toBuffer();
+        // Pipe the image stream through sharp
+        const transformer = sharpInstance.toBuffer({ resolveWithObject: true });
+        imgStream.pipe(sharpInstance);
 
-        // Get the size of the processed image
-        const processedSize = processedBuffer.length;
+        // Collect the result
+        const { data, info } = await transformer;
 
-        // Send the processed image as a buffer to the client
+        // Send response with appropriate headers
         reply
             .header('content-type', `image/${imgFormat}`)
-            .header('content-length', processedSize)
+            .header('content-length', info.size)
             .header('x-original-size', originSize)
-            .header('x-bytes-saved', originSize - processedSize)
+            .header('x-bytes-saved', originSize - info.size)
             .code(200)
-            .send(processedBuffer);
-
+            .send(data);
     } catch (error) {
         return redirect(request, reply);
     }
-}
-
-// Helper function to convert a stream to a buffer
-function imgStreamToBuffer(stream) {
-    return new Promise((resolve, reject) => {
-        const chunks = [];
-        stream.on('data', chunk => chunks.push(chunk));
-        stream.on('end', () => resolve(Buffer.concat(chunks)));
-        stream.on('error', reject);
-    });
 }
