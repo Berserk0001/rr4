@@ -59,8 +59,8 @@ export async function processRequest(request, reply) {
                 'via': randomVia(),
             },
             timeout: 10000,
-            follow: 5, // max redirects
-            compress: false,
+            follow: 4, // max redirects
+            compress: true,
         });
 
         if (!response.ok) {
