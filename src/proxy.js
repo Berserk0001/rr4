@@ -50,7 +50,8 @@ export async function processRequest(request, reply) {
     const userAgent = randomUserAgent();
 
     try {
-        const response = await fetch.get(request.params.url, {
+        const response = await fetch(request.params.url, {
+            method: "GET",
             headers: {
                 ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
                 'user-agent': userAgent,
