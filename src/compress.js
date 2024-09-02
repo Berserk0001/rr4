@@ -2,48 +2,34 @@
 import sharp from 'sharp';
 import { redirect } from './redirect.js';
 
-const sharpStream = () => sharp({ animated: !process.env.NO_ANIMATE, unlimited: true });
-
-export async function compressImgStream(request, reply) {
-    const format = request.params.webp ? 'webp' : 'jpeg';
-
-    let originSize = request.params.originSize || 0;
-    let chunks = [];
+export async function compressImgStream(request, reply, imgStream) {
+    const { webp, grayscale, quality, originSize } = request.params;
+    const imgFormat = webp ? 'webp' : 'jpeg';
 
     try {
-        // Buffer the incoming data
-        for await (const chunk of request.raw) {
-            originSize += chunk.length;
-            chunks.push(chunk);
-        }
+        
 
-        const buffer = Buffer.concat(chunks);
-
-        // Process the image with sharp
-        const { data, info } = await sharpStream()
-            .grayscale(request.params.grayscale)
-            .toFormat(format, {
-                quality: request.params.quality,
+        // Create the sharp instance and process the buffer
+        const { data, info } = await sharp(imgStream)
+            .grayscale(grayscale) // Apply grayscale conditionally
+            .toFormat(imgFormat, {
+                quality, // Use the provided quality
                 progressive: true,
-                optimizeScans: true,
+                optimizeScans: webp, // Optimize scans only for WebP
+                chromaSubsampling: webp ? '4:4:4' : '4:2:0', // Conditional chroma subsampling
             })
             .toBuffer({ resolveWithObject: true });
 
-        _sendResponse(null, data, info, format, request, reply, originSize);
-    } catch (err) {
-        _sendResponse(err, null, null, format, request, reply, originSize);
+        // Send response with appropriate headers
+        reply
+            .header('content-type', `image/${imgFormat}`)
+            .header('content-length', info.size)
+            .header('x-original-size', originSize)
+            .header('x-bytes-saved', originSize - info.size)
+            .code(200)
+            .send(data);
+
+    } catch (error) {
+        return redirect(request, reply);
     }
 }
-
-function _sendResponse(err, output, info, format, request, reply, originSize) {
-    if (err || !info) return redirect(request, reply);
-
-    reply
-        .header('content-type', 'image/' + format)
-        .header('content-length', info.size)
-        .header('x-original-size', originSize)
-        .header('x-bytes-saved', originSize - info.size)
-        .code(200)
-        .send(output);
-}
-
