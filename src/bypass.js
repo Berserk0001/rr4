@@ -1,6 +1,6 @@
 "use strict";
 
-export function bypassStream(request, reply, stream) {
+export function bypass(request, reply, stream) {
     const contentLength = request.params.originSize || 0; // Fallback to 0 if not provided
     reply.header('x-proxy-bypass', 1);
     
