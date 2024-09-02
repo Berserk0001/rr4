@@ -25,10 +25,10 @@ export async function compressImg(request, reply, imgStream) {
 
         // Send response with appropriate headers
         reply
-            .header('content-type', `image/${imgFormat}`)
-            .header('content-length', info.size)
-            .header('x-original-size', originSize)
-            .header('x-bytes-saved', originSize - info.size)
+            .header('content-type', 'image/' + format);
+            .header('content-length', info.size);
+            .header('x-original-size', request.params.originSize);
+            .header('x-bytes-saved', request.params.originSize - info.size);
             .code(200)
             .send(data);
     } catch (error) {
