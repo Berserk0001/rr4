@@ -1,4 +1,3 @@
-"use strict";
 import fetch from 'node-fetch';
 import lodash from 'lodash';
 import { generateRandomIP, randomUserAgent } from './utils.js';
@@ -8,19 +7,7 @@ import { bypass as performBypass } from './bypass.js';
 import { redirect as handleRedirect } from './redirect.js';
 import { shouldCompress as checkCompression } from './shouldCompress.js';
 
-const viaHeaders = [
-    '1.1 example-proxy-service.com (ExampleProxy/1.0)',
-    '1.0 another-proxy.net (Proxy/2.0)',
-    '1.1 different-proxy-system.org (DifferentProxy/3.1)',
-    '1.1 some-proxy.com (GenericProxy/4.0)',
-];
-
-function randomVia() {
-    const index = Math.floor(Math.random() * viaHeaders.length);
-    return viaHeaders[index];
-}
-
-export async function processRequest(request, reply) {
+export function processRequest(request, reply) {
     const { url, jpeg, bw, l } = request.query;
 
     if (!url) {
@@ -49,20 +36,19 @@ export async function processRequest(request, reply) {
     const randomIP = generateRandomIP();
     const userAgent = randomUserAgent();
 
-    try {
-        const response = await fetch(request.params.url, {
-            method: "GET",
-            headers: {
-                ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
-                'user-agent': userAgent,
-                'x-forwarded-for': randomIP,
-                'via': randomVia(),
-            },
-            timeout: 10000,
-            follow: 4, // max redirects
-            compress: false,
-        });
-
+    fetch(request.params.url, {
+        method: "GET",
+        headers: {
+            ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
+            'user-agent': userAgent,
+            'x-forwarded-for': randomIP,
+            'via': randomVia(),
+        },
+        timeout: 10000,
+        follow: 5, // max redirects
+        compress: true,
+    })
+    .then((response) => {
         if (!response.ok) {
             return handleRedirect(request, reply);
         }
@@ -71,14 +57,19 @@ export async function processRequest(request, reply) {
         reply.header('content-encoding', 'identity');
         request.params.originType = response.headers.get('content-type') || '';
         request.params.originSize = parseInt(response.headers.get('content-length'), 10) || 0;
+
+        return response.body;  // This is a readable stream
+    })
+    .then((body) => {
         if (checkCompression(request)) {
             // Pass the response body stream to the compressImg function
-            return applyCompression(request, reply, response.body);
+            return applyCompression(request, reply, body);
         } else {
             // Pass the response body stream to the bypass function
-            return performBypass(request, reply, response.body);
+            return performBypass(request, reply, body);
         }
-    } catch (err) {
+    })
+    .catch((err) => {
         return handleRedirect(request, reply);
-    }
+    });
 }
