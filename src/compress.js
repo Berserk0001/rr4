@@ -7,22 +7,21 @@ export async function compressImg(request, reply, imgStream) {
     const imgFormat = webp ? 'webp' : 'jpeg';
 
     try {
-        // Create the sharp instance and start the pipeline with a stream
-        let sharpInstance = sharp()
-            .grayscale(grayscale) // Apply grayscale conditionally
+        // Create the sharp instance and start the pipeline with the image stream
+        const sharpInstance = sharp()
+            .grayscale(grayscale)
             .toFormat(imgFormat, {
-                quality, // Use the provided quality
+                quality,
                 progressive: true,
-                optimizeScans: webp, // Optimize scans only for WebP
-                chromaSubsampling: webp ? '4:4:4' : '4:2:0', // Conditional chroma subsampling
+                optimizeScans: webp,
+                chromaSubsampling: webp ? '4:4:4' : '4:2:0',
             });
 
-        // Pipe the image stream through sharp
-        const transformer = sharpInstance.toBuffer({ resolveWithObject: true });
+        // Pipe the image stream into sharp
         imgStream.pipe(sharpInstance);
 
-        // Collect the result
-        const { data, info } = await transformer;
+        // Convert to buffer and get info
+        const { data, info } = await sharpInstance.toBuffer({ resolveWithObject: true });
 
         // Send response with appropriate headers
         reply
