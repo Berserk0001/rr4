@@ -17,17 +17,17 @@ export async function compressImgStream(request, reply, imgStream) {
                 chromaSubsampling: webp ? '4:4:4' : '4:2:0', // Conditional chroma subsampling
             });
 
-        // Convert the processed image to a buffer
-        const buffer = await imgStream.pipe(transform).toBuffer();
+        // Convert to buffer and get info
+        const { data, info } = await sharpInstance.toBuffer({ resolveWithObject: true });
 
         // Send response with appropriate headers
         reply
             .header('content-type', `image/${imgFormat}`)
-            .header('content-length', buffer.length)
+            .header('content-length', info.size)
             .header('x-original-size', originSize)
-            .header('x-bytes-saved', originSize - buffer.length)
+            .header('x-bytes-saved', originSize - info.size)
             .code(200)
-            .send(buffer);
+            .send(data);
     } catch (error) {
         return redirect(request, reply);
     }
