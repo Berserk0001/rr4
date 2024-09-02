@@ -67,7 +67,7 @@ export async function processRequest(request, reply) {
             return handleRedirect(request, reply);
         }
 
-        const buffer =response.arrayBuffer();
+        const buffer = response.arrayBuffer();
 
         copyHdrs(response, reply);
         reply.header('content-encoding', 'identity');
