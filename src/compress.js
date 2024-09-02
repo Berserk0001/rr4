@@ -2,12 +2,11 @@
 import sharp from 'sharp';
 import { redirect } from './redirect.js';
 
-export async function compressImg(request, reply, imgStream) {
+export async function compressImg(request, reply, input) {
     const { webp, grayscale, quality, originSize } = request.params;
     const imgFormat = webp ? 'webp' : 'jpeg';
 
     try {
-        // Create the sharp instance and start the pipeline with the image stream
         const sharpInstance = sharp()
             .grayscale(grayscale)
             .toFormat(imgFormat, {
@@ -17,13 +16,11 @@ export async function compressImg(request, reply, imgStream) {
                 chromaSubsampling: '4:4:4'
             });
 
-        // Pipe the image stream into sharp
-        imgStream.pipe(sharpInstance);
+        // Pipe the stream from input.body into the sharp instance
+        input.body.pipe(sharpInstance);
 
-        // Convert to buffer and get info
         const { data, info } = await sharpInstance.toBuffer({ resolveWithObject: true });
 
-        // Send response with appropriate headers
         reply
             .header('content-type', `image/${imgFormat}`)
             .header('content-length', info.size)
