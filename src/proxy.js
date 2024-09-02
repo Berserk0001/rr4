@@ -1,10 +1,10 @@
 "use strict";
 import fetch from 'node-fetch';
-import lodash from 'lodash'; // Import lodash as the default import
+import lodash from 'lodash';
 import { generateRandomIP, randomUserAgent } from './utils.js';
 import { copyHeaders as copyHdrs } from './copyHeaders.js';
 import { compressImg as applyCompression } from './compress.js';
-import { bypassStream as performBypass } from './bypass.js';
+import { bypass as performBypass } from './bypass.js';
 import { redirect as handleRedirect } from './redirect.js';
 import { shouldCompress as checkCompression } from './shouldCompress.js';
 
@@ -66,18 +66,16 @@ export async function processRequest(request, reply) {
             return handleRedirect(request, reply);
         }
 
-        const buffer = await response.buffer(); // Buffer the response for processing
-        const stream = response.body; // Get the response stream
-
         copyHdrs(response, reply);
         reply.header('content-encoding', 'identity');
         request.params.originType = response.headers.get('content-type') || '';
-        request.params.originSize = buffer.length;
 
         if (checkCompression(request)) {
-            return applyCompression(request, reply, buffer);
+            // Pass the response body stream to the compressImg function
+            return applyCompression(request, reply, response.body);
         } else {
-            return performBypass(request, reply, stream);
+            // Pass the response body stream to the bypass function
+            return performBypass(request, reply, response.body);
         }
     } catch (err) {
         return handleRedirect(request, reply);
