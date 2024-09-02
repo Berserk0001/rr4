@@ -16,17 +16,21 @@ export function shouldCompress(request) {
   }
 
   // If the image is in WebP format and its size is smaller than the minimum compress length, do not compress
-  if (webp && originSize < MIN_COMPRESS_LENGTH) {
+  if (!webp && originSize < MIN_COMPRESS_LENGTH) {
     return false;
   }
 
   // If the image is a PNG or GIF and its size is smaller than the transparent compress length, do not compress
-  if ((originType.endsWith('png') || originType.endsWith('gif')) && originSize < MIN_TRANSPARENT_COMPRESS_LENGTH) {
+  if (originType.endsWith('gif') && originSize < MIN_TRANSPARENT_COMPRESS_LENGTH) {
     return false;
   }
 
   // Include PNG images in compression criteria regardless of their size
   if (originType.endsWith('png')) {
+    return true;
+  }
+
+  if (originType.endsWith('webp')) {
     return true;
   }
 
