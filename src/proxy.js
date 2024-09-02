@@ -69,6 +69,7 @@ export async function processRequest(request, reply) {
         copyHdrs(response, reply);
         reply.header('content-encoding', 'identity');
         request.params.originType = response.headers.get('content-type') || '';
+        request.params.originSize = parseInt(response.headers.get('content-length'), 10) || 0;
 
         if (checkCompression(request)) {
             // Pass the response body stream to the compressImg function
