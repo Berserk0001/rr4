@@ -1,10 +1,10 @@
 "use strict";
-const sharp = require('sharp');
-const redirect = require('./redirect');
+import sharp from 'sharp';
+import { redirect } from './redirect.js';
 
 const sharpStream = () => sharp({ animated: !process.env.NO_ANIMATE, unlimited: true });
 
-async function compress(request, reply) {
+export async function compress(request, reply) {
     const format = request.params.webp ? 'webp' : 'jpeg';
 
     let originSize = request.params.originSize || 0;
@@ -47,4 +47,3 @@ function _sendResponse(err, output, info, format, request, reply, originSize) {
         .send(output);
 }
 
-module.exports = compress;
