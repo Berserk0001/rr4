@@ -14,7 +14,7 @@ export function shouldCompress(request) {
   if (webp && originSize < MIN_COMPRESS_LENGTH) {
     return false;
   }
-  if (!webp && (originType.endsWith('png') || originType.endsWith('gif')) && originSize < MIN_TRANSPARENT_COMPRESS_LENGTH) {
+  if (!webp && (originType.endsWith('gif')) && originSize < MIN_TRANSPARENT_COMPRESS_LENGTH) {
     return false;
   }
 
