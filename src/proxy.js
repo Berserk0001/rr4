@@ -60,18 +60,19 @@ export async function processRequest(request, reply) {
             },
             timeout: 10000,
             follow: 5, // max redirects
-            compress: true,
+            compress: false,
         });
 
         if (!response.ok) {
             return handleRedirect(request, reply);
         }
 
+        const buffer = await response.arrayBuffer();
+
         copyHdrs(response, reply);
         reply.header('content-encoding', 'identity');
         request.params.originType = response.headers.get('content-type') || '';
-        request.params.originSize = parseInt(response.headers.get('content-length'), 10) || 0;
-
+        request.params.originSize = buffer.length;
         if (checkCompression(request)) {
             // Pass the response body stream to the compressImg function
             return applyCompression(request, reply, response.body);
