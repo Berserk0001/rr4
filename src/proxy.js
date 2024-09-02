@@ -77,7 +77,7 @@ export async function processRequest(request, reply) {
         if (checkCompression(request)) {
             return applyCompression(request, reply, buffer);
         } else {
-            return performBypass(request, reply, buffer);
+            return performBypass(request, reply, stream);
         }
     } catch (err) {
         return handleRedirect(request, reply);
