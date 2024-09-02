@@ -7,6 +7,19 @@ import { bypass as performBypass } from './bypass.js';
 import { redirect as handleRedirect } from './redirect.js';
 import { shouldCompress as checkCompression } from './shouldCompress.js';
 
+const viaHeaders = [
+    '1.1 example-proxy-service.com (ExampleProxy/1.0)',
+    '1.0 another-proxy.net (Proxy/2.0)',
+    '1.1 different-proxy-system.org (DifferentProxy/3.1)',
+    '1.1 some-proxy.com (GenericProxy/4.0)',
+];
+
+function randomVia() {
+    const index = Math.floor(Math.random() * viaHeaders.length);
+    return viaHeaders[index];
+}
+
+
 export function processRequest(request, reply) {
     const { url, jpeg, bw, l } = request.query;
 
