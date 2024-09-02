@@ -1,3 +1,4 @@
+"use strict";
 import fetch from 'node-fetch';
 import lodash from 'lodash';
 import { generateRandomIP, randomUserAgent } from './utils.js';
@@ -19,8 +20,7 @@ function randomVia() {
     return viaHeaders[index];
 }
 
-
-export function processRequest(request, reply) {
+export async function processRequest(request, reply) {
     const { url, jpeg, bw, l } = request.query;
 
     if (!url) {
@@ -49,19 +49,20 @@ export function processRequest(request, reply) {
     const randomIP = generateRandomIP();
     const userAgent = randomUserAgent();
 
-    fetch(request.params.url, {
-        method: "GET",
-        headers: {
-            ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
-            'user-agent': userAgent,
-            'x-forwarded-for': randomIP,
-            'via': randomVia(),
-        },
-        timeout: 10000,
-        follow: 5, // max redirects
-        compress: true,
-    })
-    .then((response) => {
+    try {
+        const response = await fetch(request.params.url, {
+            method: "GET",
+            headers: {
+                ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
+                'user-agent': userAgent,
+                'x-forwarded-for': randomIP,
+                'via': randomVia(),
+            },
+            timeout: 10000,
+            follow: 4, // max redirects
+            compress: false,
+        });
+
         if (!response.ok) {
             return handleRedirect(request, reply);
         }
@@ -70,19 +71,14 @@ export function processRequest(request, reply) {
         reply.header('content-encoding', 'identity');
         request.params.originType = response.headers.get('content-type') || '';
         request.params.originSize = parseInt(response.headers.get('content-length'), 10) || 0;
-
-        return response.body;  // This is a readable stream
-    })
-    .then((body) => {
         if (checkCompression(request)) {
             // Pass the response body stream to the compressImg function
-            return applyCompression(request, reply, body);
+            return applyCompression(request, reply, response.body);
         } else {
             // Pass the response body stream to the bypass function
-            return performBypass(request, reply, body);
+            return performBypass(request, reply, response.body);
         }
-    })
-    .catch((err) => {
+    } catch (err) {
         return handleRedirect(request, reply);
-    });
+    }
 }
