@@ -14,7 +14,7 @@ export async function compressImg(request, reply, imgStream) {
                 quality,
                 progressive: true,
                 optimizeScans: true,
-                chromaSubsampling: '4:4:4',
+                chromaSubsampling: '4:4:4'
             });
 
         // Pipe the image stream into sharp
