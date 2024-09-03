@@ -1,10 +1,10 @@
 "use strict";
-export function redirect(req, res) {
-  if (res.sent) {
+export function redirect(request, reply) {
+  if (reply.sent) {
     return;
   }
 
-  res
+  reply
     .header('content-length', 0)
     .removeHeader('cache-control')
     .removeHeader('expires')
