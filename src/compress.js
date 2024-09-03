@@ -13,14 +13,15 @@ export async function compressImg(request, reply, input) {
                 quality,
                 progressive: true,
                 optimizeScans: true,
-                chromaSubsampling: '4:4:4'
+                chromaSubsampling: '4:4:4',
             });
 
-        // Pipe the stream from input.body into the sharp instance
+        // Pipe the image stream from input.body into the sharp instance
         input.body.pipe(sharpInstance);
 
         const { data, info } = await sharpInstance.toBuffer({ resolveWithObject: true });
 
+        // Send response with appropriate headers
         reply
             .header('content-type', `image/${imgFormat}`)
             .header('content-length', info.size)
