@@ -2,40 +2,34 @@
 import sharp from 'sharp';
 import { redirect } from './redirect.js';
 
-const sharpStream = _ => sharp({ animated: !process.env.NO_ANIMATE, unlimited: true });
-
-export async function compressImg(req, res, origin) {
-    const { body } = origin; // Extracting body from origin
-    const format = req.params.webp ? 'webp' : 'jpeg';
+export async function compressImg(request, reply, input) {
+    const { webp, grayscale, quality, originSize } = request.params;
+    const imgFormat = webp ? 'webp' : 'jpeg';
 
     try {
-        // Set up the sharp processing pipeline
-        body.pipe(
-            sharpStream()
-                .grayscale(req.params.grayscale)
-                .toFormat(format, {
-                    quality: req.params.quality,
-                    progressive: true,
-                    optimizeScans: true,
-                    chromaSubsampling: '4:4:4'
-                })
-                .toBuffer((err, output, info) => _sendResponse(err, output, info, format, req, res))
-        );
+        const sharpInstance = sharp()
+            .grayscale(grayscale)
+            .toFormat(imgFormat, {
+                quality,
+                progressive: true,
+                optimizeScans: true,
+                chromaSubsampling: '4:4:4',
+            });
+
+        // Pipe the image stream from input.body into the sharp instance
+        input.body.pipe(sharpInstance);
+
+        const { data, info } = await sharpInstance.toBuffer({ resolveWithObject: true });
+
+        // Send response with appropriate headers
+        reply
+            .header('content-type', `image/${imgFormat}`)
+            .header('content-length', info.size)
+            .header('x-original-size', originSize)
+            .header('x-bytes-saved', originSize - info.size)
+            .code(200)
+            .send(data);
     } catch (error) {
-        return redirect(req, res);
+        return redirect(request, reply);
     }
-}
-
-function _sendResponse(err, output, info, format, req, res) {
-    if (err || !info) {
-        return redirect(req, res);
-    }
-
-    res.setHeader('content-type', 'image/' + format);
-    res.setHeader('content-length', info.size);
-    res.setHeader('x-original-size', req.params.originSize);
-    res.setHeader('x-bytes-saved', req.params.originSize - info.size);
-    res.status(200);
-    res.write(output);
-    res.end();
 }
