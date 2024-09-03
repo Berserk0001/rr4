@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "fastify": "^4.28.1",
-    "node-fetch": "^3.3.2",
+    "undici": "6.x",
     "lodash": "^4.17.21",
     "sharp": "^0.33.5"
   },
