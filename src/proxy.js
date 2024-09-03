@@ -1,6 +1,6 @@
 "use strict";
 
-import { request as undiciRequest } from "undici";
+import undici from "undici";
 import lodash from "lodash";
 import { shouldCompress } from "./shouldCompress.js";
 import { redirect } from "./redirect.js";
@@ -14,8 +14,8 @@ export async function processRequest(req, reply) {
     
 
     try {
-        let origin = await undiciRequest(req.query.url, {
-            method: "GET",
+        let origin = await undici.request(req.query.url, {
+            
             headers: {
                 ...lodash.pick(req.headers, ["cookie", "dnt", "referer", "range"]),
                 "user-agent": "Bandwidth-Hero Compressor",
