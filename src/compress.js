@@ -4,38 +4,37 @@ import { redirect } from './redirect.js';
 
 const sharpStream = _ => sharp({ animated: !process.env.NO_ANIMATE, unlimited: true });
 
-export async function compressImg(req, res, origin) {
+export async function compressImg(request, reply, origin) {
     const { body } = origin; // Extracting body from origin
-    const format = req.params.webp ? 'webp' : 'jpeg';
+    const format = request.params.webp ? 'webp' : 'jpeg';
 
     try {
         // Set up the sharp processing pipeline
         body.pipe(
             sharpStream()
-                .grayscale(req.params.grayscale)
+                .grayscale(request.params.grayscale)
                 .toFormat(format, {
-                    quality: req.params.quality,
+                    quality: request.params.quality,
                     progressive: true,
                     optimizeScans: true,
                     chromaSubsampling: '4:4:4'
                 })
-                .toBuffer((err, output, info) => _sendResponse(err, output, info, format, req, res))
+                .toBuffer((err, output, info) => _sendResponse(err, output, info, format, request, reply))
         );
     } catch (error) {
-        return redirect(req, res);
+        return redirect(request, reply);
     }
 }
 
-function _sendResponse(err, output, info, format, req, res) {
+function _sendResponse(err, output, info, format, request, reply) {
     if (err || !info) {
-        return redirect(req, res);
+        return redirect(request, reply);
     }
 
-    res.setHeader('content-type', 'image/' + format);
-    res.setHeader('content-length', info.size);
-    res.setHeader('x-original-size', req.params.originSize);
-    res.setHeader('x-bytes-saved', req.params.originSize - info.size);
-    res.status(200);
-    res.write(output);
-    res.end();
+    reply.header('content-type', 'image/' + format);
+    reply.header('content-length', info.size);
+    reply.header('x-original-size', request.params.originSize);
+    reply.header('x-bytes-saved', request.params.originSize - info.size);
+    reply.code(200);
+    res.send(output);
 }
