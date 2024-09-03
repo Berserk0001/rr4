@@ -22,13 +22,7 @@ function randomVia() {
 export async function processRequest(req, res) {
     const { url, jpeg, bw, l } = req.query;
 
-    // Avoid loopback that could cause server hang
-    if (
-        req.headers["via"] === "1.1 example-proxy-service.com" &&
-        ["127.0.0.1", "::1"].includes(req.headers["x-forwarded-for"] || req.ip)
-    ) {
-        return handleRedirect(req, res);
-    }
+    
 
     // If no URL is provided, just return a basic proxy response
     if (!url) {
