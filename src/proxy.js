@@ -1,111 +1,86 @@
 "use strict";
-import undici from "undici";  // Importing undici
+
+import { request as undiciRequest } from "undici";
 import lodash from "lodash";
-import { generateRandomIP, randomUserAgent } from './utils.js';
-import { copyHeaders as copyHdrs } from './copyHeaders.js';
-import { compressImg as applyCompression } from './compress.js';
-import { redirect as handleRedirect } from './redirect.js';
-import { shouldCompress as checkCompression } from './shouldCompress.js';
+import { shouldCompress } from "./shouldCompress.js";
+import { redirect } from "./redirect.js";
+import { compressImg } from "./compress.js";
+import { copyHeaders } from "./copyHeaders.js";
 
-const viaHeaders = [
-    '1.1 example-proxy-service.com (ExampleProxy/1.0)',
-    '1.0 another-proxy.net (Proxy/2.0)',
-    '1.1 different-proxy-system.org (DifferentProxy/3.1)',
-    '1.1 some-proxy.com (GenericProxy/4.0)',
-];
-
-function randomVia() {
-    const index = Math.floor(Math.random() * viaHeaders.length);
-    return viaHeaders[index];
-}
-
-export async function processRequest(req, res) {
-    const { url, jpeg, bw, l } = req.query;
-
+export async function processRequest(req, reply) {
+    /*
+     * Avoid loopback that could cause a server hang.
+     */
     
 
-    // If no URL is provided, just return a basic proxy response
-    if (!url) {
-        const ipAddress = generateRandomIP();
-        const ua = randomUserAgent();
-        const hdrs = {
-            ...lodash.pick(req.headers, ['cookie', 'dnt', 'referer']),
-            'x-forwarded-for': ipAddress,
-            'user-agent': ua,
-            'via': randomVia(),
-        };
-
-        Object.entries(hdrs).forEach(([key, value]) => res.header(key, value));
-        return res.send(`bandwidth-hero-proxy`);
-    }
-
-    // Prepare and clean up the URL
-    const urlList = Array.isArray(url) ? url.join('&url=') : url;
-    const cleanUrl = urlList.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, 'http://');
-
-    // Set up request parameters
-    req.params.url = cleanUrl;
-    req.params.webp = !jpeg;
-    req.params.grayscale = bw !== '0';
-    req.params.quality = parseInt(l, 10) || 40;
-
-    const randomIP = generateRandomIP();
-    const userAgent = randomUserAgent();
-
     try {
-        // Make the HTTP request using undici.request
-        const origin = await undici.request(cleanUrl, {
-            method: "GET",  // Explicitly specify the GET method
+        let origin = await undiciRequest(req.query.url, {
+            method: "GET",
             headers: {
-                ...lodash.pick(req.headers, ['cookie', 'dnt', 'referer']),
-                'user-agent': userAgent,
-                'x-forwarded-for': randomIP,
-                'via': randomVia(),
+                ...lodash.pick(req.headers, ["cookie", "dnt", "referer", "range"]),
+                "user-agent": "Bandwidth-Hero Compressor",
+                "x-forwarded-for": req.headers["x-forwarded-for"] || req.ip,
+                via: "1.1 bandwidth-hero",
             },
             maxRedirections: 4
         });
 
-        const { statusCode, headers, body } = origin;
-
-        // Handle errors or redirects
-        if (statusCode >= 400) {
-            return handleRedirect(req, res);
-        }
-
-        // Handle redirects
-        if (statusCode >= 300 && headers.location) {
-            return handleRedirect(req, res);
-        }
-
-        // Copy the headers from the origin response to the reply
-        copyHdrs(origin, res);
-        res.setHeader('content-encoding', 'identity');
-        req.params.originType = headers['content-type'] || '';
-        req.params.originSize = parseInt(headers['content-length'], 10) || 0;
-
-        // Determine if compression should be applied
-        if (checkCompression(req)) {
-            /*
-             * Compress the image by passing the response body stream to the compressImg function
-             */
-            return applyCompression(req, res, { body });
-        } else {
-            /*
-             * Bypass compression and pipe the response body directly to the client
-             */
-            res.setHeader("x-proxy-bypass", 1);
-
-            // Copy specific headers for the bypass response
-            for (const headerName of ['accept-ranges', 'content-type', 'content-length', 'content-range']) {
-                if (headers[headerName]) {
-                    reply.header(headerName, headers[headerName]);
-                }
-            }
-
-            // Pipe the response body directly to the client
-            return body.pipe(reply.raw);
-        }
+        _onRequestResponse(origin, req, reply);
     } catch (err) {
-        return handleRedirect(req, res);
+        _onRequestError(req, reply, err);
+    }
+}
+
+function _onRequestError(req, reply, err) {
+    // Ignore invalid URL.
+    if (err.code === "ERR_INVALID_URL") {
+        return reply.status(400).send("Invalid URL");
+    }
+
+    /*
+     * When there's a real error, redirect and destroy the stream immediately.
+     */
+    redirect(req, reply);
+    console.error(err);
+}
+
+function _onRequestResponse(origin, req, reply) {
+    if (origin.statusCode >= 400) {
+        return redirect(req, reply);
+    }
+
+    // Handle redirects
+    if (origin.statusCode >= 300 && origin.headers.location) {
+        return redirect(req, reply);
+    }
+
+    copyHeaders(origin, reply);
+    reply.header("content-encoding", "identity");
+    reply.header("Access-Control-Allow-Origin", "*");
+    reply.header("Cross-Origin-Resource-Policy", "cross-origin");
+    reply.header("Cross-Origin-Embedder-Policy", "unsafe-none");
+    req.params.originType = origin.headers["content-type"] || "";
+    req.params.originSize = origin.headers["content-length"] || "0";
+
+    origin.body.on('error', _ => req.raw.destroy());
+
+    if (shouldCompress(req)) {
+        /*
+         * If compression is needed, pipe the origin body through the compressor.
+         */
+        return compressImg(req, reply, origin);
+    } else {
+        /*
+         * If compression is not needed, pipe the origin body directly to the response.
+         */
+        reply.header("x-proxy-bypass", 1);
+
+        for (const headerName of ["accept-ranges", "content-type", "content-length", "content-range"]) {
+            if (headerName in origin.headers) {
+                reply.header(headerName, origin.headers[headerName]);
+            }
+        }
+
+        return origin.body.pipe(reply.raw);
     }
 }
