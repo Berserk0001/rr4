@@ -14,7 +14,7 @@ export async function processRequest(req, reply) {
     
 
     try {
-        let origin = await undici.request(req.query.url, {
+        let origin = await undici.request(req.params.url, {
             
             headers: {
                 ...lodash.pick(req.headers, ["cookie", "dnt", "referer", "range"]),
