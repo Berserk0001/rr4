@@ -98,12 +98,12 @@ export async function processRequest(req, res) {
             // Copy specific headers for the bypass response
             for (const headerName of ['accept-ranges', 'content-type', 'content-length', 'content-range']) {
                 if (headers[headerName]) {
-                    res.setHeader(headerName, headers[headerName]);
+                    reply.header(headerName, headers[headerName]);
                 }
             }
 
             // Pipe the response body directly to the client
-            return body.pipe(res.raw);
+            return body.pipe(reply.raw);
         }
     } catch (err) {
         return handleRedirect(req, res);
