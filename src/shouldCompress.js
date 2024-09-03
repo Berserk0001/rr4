@@ -1,7 +1,7 @@
 "use strict";
 
-export function shouldCompress(request) {
-  const { originType, originSize} = request.params;
+export function shouldCompress(req) {
+  const { originType, originSize} = req.params;
 
   // If the originType does not start with 'image', do not compress
   if (!originType.startsWith('image')) {
