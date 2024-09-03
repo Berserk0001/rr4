@@ -7,6 +7,7 @@ import { shouldCompress } from './shouldCompress.js';
 import { redirect } from './redirect.js';
 import { compressImg } from './compress.js';
 import { copyHeaders } from './copyHeaders.js';
+const DEFAULT_QUALITY = 40
 
 const viaHeaders = [
     '1.1 example-proxy-service.com (ExampleProxy/1.0)',
@@ -21,7 +22,7 @@ function randomVia() {
 }
 
 export async function processRequest(request, reply) {
-    const { url, jpeg, bw, l } = request.query;
+   let url = request.query.url;
 
     if (!url) {
         const ipAddress = generateRandomIP();
@@ -38,19 +39,15 @@ export async function processRequest(request, reply) {
         return reply.send(`bandwidth-hero-proxy`);
     }
 
-    const urlList = Array.isArray(url) ? url.join('&url=') : url;
-    const cleanUrl = urlList.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, 'http://');
-
-    request.params.url = cleanUrl;
-    request.params.webp = !jpeg;
-    request.params.grayscale = bw !== '0';
-    request.params.quality = parseInt(l, 10) || 40;
+    request.params.url = decodeURIComponent(url);
+    request.params.webp = !request.query.jpeg
+    request.params.grayscale = request.query.bw != 0
+    request.params.quality = parseInt(request.query.l, 10) || DEFAULT_QUALITY
 
     const randomIP = generateRandomIP();
     const userAgent = randomUserAgent();
     try {
         let origin = await undiciRequest(request.params.url, {
-            method: 'GET',
             headers: {
                 ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
                 'user-agent': userAgent,
