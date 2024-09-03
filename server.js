@@ -15,8 +15,13 @@ const PORT = process.env.PORT || 8080;
 // Set up the route
 app.get('/', async (request, reply) => {
   return processRequest(request, reply);
+  next();
 });
 
+// Handle favicon.ico separately
+  app.get('/favicon.ico', (req, res) => {
+    reply.status(204).send();
+  });
 // Start the server
 const start = async () => {
   try {
