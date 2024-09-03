@@ -1,21 +1,23 @@
+
 "use strict";
+const MIN_COMPRESS_LENGTH = 1024
+const MIN_TRANSPARENT_COMPRESS_LENGTH = MIN_COMPRESS_LENGTH * 100
 
-export function shouldCompress(req) {
-  const { originType, originSize} = req.params;
+export function shouldCompress(request) {
+  const { originType, originSize, webp } = request.params
 
-  // If the originType does not start with 'image', do not compress
-  if (!originType.startsWith('image')) {
+  if (!originType.startsWith('image')) return false;
+  if (originSize === 0) return false;
+  if (request.headers.range) return false;
+  if (webp && originSize < MIN_COMPRESS_LENGTH) return false;
+  if (
+    !webp &&
+    (originType.endsWith('png') || originType.endsWith('gif')) &&
+    originSize < MIN_TRANSPARENT_COMPRESS_LENGTH
+  ) {
     return false;
   }
 
-  // If the originSize is 0, do not compress
-  if (originSize === 0) {
-    return false;
-  }
-
-  // If the image is in WebP format and its size is smaller than the minimum compress length, do not compress
-  
-
-  // For all other cases, return true to indicate the image should be compressed
   return true;
 }
+
