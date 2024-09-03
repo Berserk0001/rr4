@@ -1,6 +1,6 @@
 "use strict";
-import fetch from 'node-fetch';
-import lodash from 'lodash';
+import undici from "undici";  // Import undici module
+import lodash from "lodash";
 import { generateRandomIP, randomUserAgent } from './utils.js';
 import { copyHeaders as copyHdrs } from './copyHeaders.js';
 import { compressImg as applyCompression } from './compress.js';
@@ -23,6 +23,7 @@ function randomVia() {
 export async function processRequest(request, reply) {
     const { url, jpeg, bw, l } = request.query;
 
+    // If no URL is provided, just return a basic proxy response
     if (!url) {
         const ipAddress = generateRandomIP();
         const ua = randomUserAgent();
@@ -34,13 +35,14 @@ export async function processRequest(request, reply) {
         };
 
         Object.entries(hdrs).forEach(([key, value]) => reply.header(key, value));
-        
         return reply.send(`bandwidth-hero-proxy`);
     }
 
+    // Prepare and clean up the URL
     const urlList = Array.isArray(url) ? url.join('&url=') : url;
     const cleanUrl = urlList.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, 'http://');
 
+    // Set up request parameters
     request.params.url = cleanUrl;
     request.params.webp = !jpeg;
     request.params.grayscale = bw !== '0';
@@ -50,7 +52,8 @@ export async function processRequest(request, reply) {
     const userAgent = randomUserAgent();
 
     try {
-        const response = await fetch(request.params.url, {
+        // Make the HTTP request using undici.request
+        const origin = await undici.request(cleanUrl, {
             method: "GET",
             headers: {
                 ...lodash.pick(request.headers, ['cookie', 'dnt', 'referer']),
@@ -58,26 +61,39 @@ export async function processRequest(request, reply) {
                 'x-forwarded-for': randomIP,
                 'via': randomVia(),
             },
-            timeout: 10000,
-            follow: 5, // max redirects
-            compress: true,
+            maxRedirections: 4
         });
 
-        if (!response.ok) {
+        const { statusCode, headers, body } = origin;
+
+        // Handle errors or redirects
+        if (statusCode >= 400) {
             return handleRedirect(request, reply);
         }
 
-        copyHdrs(response, reply);
+        // Copy the headers from the origin response to the reply
+        copyHdrs(headers, reply);
         reply.header('content-encoding', 'identity');
-        request.params.originType = response.headers.get('content-type') || '';
-        request.params.originSize = parseInt(response.headers.get('content-length'), 10) || 0;
+        request.params.originType = headers['content-type'] || '';
+        request.params.originSize = parseInt(headers['content-length'], 10) || 0;
 
-        const input = { body: response.body }; // Wrap the stream in an object
+        const input = { body }; // Wrap the stream in an object
 
+        // Determine if compression should be applied
         if (checkCompression(request)) {
             return applyCompression(request, reply, input);
         } else {
-            return performBypass(request, reply, response.body);
+            reply.header('x-proxy-bypass', 1);
+
+            // Copy specific headers for the bypass response
+            for (const headerName of ['accept-ranges', 'content-type', 'content-length', 'content-range']) {
+                if (headers[headerName]) {
+                    reply.header(headerName, headers[headerName]);
+                }
+            }
+
+            // Pipe the response body directly to the client
+            return body.pipe(reply.raw);
         }
     } catch (err) {
         return handleRedirect(request, reply);
